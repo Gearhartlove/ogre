@@ -4,41 +4,33 @@ use bevy::input::keyboard::KeyboardInput;
 
 pub struct TextPlugin;
 
+#[derive(Component)]
+pub struct MainText;
+pub struct ExecuteEvent;
+struct ControlDown(bool);
+pub struct CurrentLine(pub(crate) usize);
+
+
 impl Plugin for TextPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_event::<ExecuteEvent>()
             .insert_resource(ControlDown(false))
+            .insert_resource(CurrentLine(0))
             .add_startup_system(setup)
             .add_system(type_to_screen)
             .add_system(hold_control);
     }
 }
 
+impl TextPlugin {
+    const PROMPT: &'static str = "root@ogre location % ";
+}
+
 fn setup(
     mut commands: Commands,
     ass: Res<AssetServer>,
 ) {
-    // camera
-    commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(3.4, 1.2, 0.).looking_at(Vec3::new(0., 1.2, 0.), Vec3::Y),
-        ..default()
-    });
-    // tv
-    commands.spawn_bundle(SceneBundle {
-        scene: ass.load("3d/tv.gltf#Scene0"),
-        transform: Transform::from_xyz(0., 0., 0.),
-        ..default()
-    });
-    // light
-    commands.spawn_bundle(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(4.0, 10.0, 0.0),
-        ..default()
-    });
     // text
     let font = ass.load("fonts/monofontorg.otf");
     let text_style = TextStyle {
@@ -59,7 +51,7 @@ fn setup(
     };
     let text_alignment = TextAlignment::TOP_LEFT;
     commands.spawn_bundle(TextBundle::from_section(
-        "> |",
+        TextPlugin::PROMPT,
         text_style,
     )
         .with_text_alignment(text_alignment)
@@ -67,50 +59,73 @@ fn setup(
         .insert(MainText);
 }
 
-#[derive(Component)]
-struct MainText;
-
 fn type_to_screen(
     mut key_evr: EventReader<ReceivedCharacter>,
+    mut exe_evw: EventWriter<ExecuteEvent>,
     mut text_query: Query<&mut Text, With<MainText>>,
     control_down: Res<ControlDown>,
+    mut curr_line: ResMut<CurrentLine>,
+    ass: Res<AssetServer>,
 ) {
     for ev in key_evr.iter() {
-        let c = ev.char;
+        let c: char = ev.char;
         println!("Got char: '{}'", c);
         if let Ok(mut text) = text_query.get_single_mut() {
+            // enter a command
+            // if c == '
+            if c == '\r' {
+                let text_style = TextStyle {
+                    font: ass.load("fonts/monofontorg.otf"),
+                    font_size: 20.0,
+                    color: Color::LIME_GREEN,
+                };
+                // give the text another section?
+                // todo: update the [0] to a current line resource 
+                text.sections.push(TextSection {
+                    value: format!("\n{}", TextPlugin::PROMPT),
+                    style: text_style,
+                });
+                exe_evw.send(ExecuteEvent);
+                // let tokens = tokenize(text);
+                // evaluate(tokens);
+                // todo: add this after the execution
+                // text.sections[0].value.push_str(TextPlugin::PROMPT);
+            }
             // delete line
-            if c == '' {
+            else if c == '' {
                 loop {
-                    if text.sections[0].value.pop().unwrap() == '>' {
-                        text.sections[0].value.push_str("> ");
+                    if text.sections[curr_line.0].value.pop().unwrap() == '%' {
+                        text.sections[curr_line.0].value.push_str("% ");
                         break;
                     }
                 }
             }
-            // delete word
-            if c == '' {
-                // if holding control, delete word
-                if control_down.0 {
-                    text.sections[0].value.pop();
-                    loop {
-                        if text.sections[0].value.pop().unwrap() == ' ' {
-                            text.sections[0].value.push(' ');
-                            break;
+            else if c == '' {
+                // can't delete the prompt
+                let len = text.sections[curr_line.0].value.len();
+                let len = len - 2;
+                let slice = &text.sections[curr_line.0].value[len..];
+                if slice != "% " {
+                    // if holding control, delete word
+                    if control_down.0 {
+                        text.sections[curr_line.0].value.pop();
+                        loop {
+                            if text.sections[curr_line.0].value.pop().unwrap() == ' ' {
+                                text.sections[curr_line.0].value.push(' ');
+                                break;
+                            }
                         }
+                    } else {
+                        // else, delete a single character
+                        text.sections[curr_line.0].value.pop();
                     }
-                } else {
-                    // else, delete a single character
-                    text.sections[0].value.pop();
                 }
             } else {
-                text.sections[0].value.push(c);
+                text.sections[curr_line.0].value.push(c);
             }
         }
     }
 }
-
-struct ControlDown(bool);
 
 fn hold_control(
     keys: Res<Input<KeyCode>>,
