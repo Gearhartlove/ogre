@@ -1,10 +1,14 @@
-use bevy::prelude::*;
+mod text;
+
+use bevy::{prelude::*, reflect::erased_serde::__private::serde::__private::de};
+use bevy::input::keyboard::KeyboardInput;
+use bevy::text::Text2dBounds;
+use crate::text::TextPlugin;
 
 fn main() {
     App::new()
+        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(
-            // look at documentation
-            // go to the source code
             WindowDescriptor {
                 title: "OGRE".to_string(),
                 width: 640.,
@@ -14,6 +18,8 @@ fn main() {
             }
         )
         .add_plugins(DefaultPlugins)
+        .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+        .add_plugin(TextPlugin)
         .add_system(bevy::window::close_on_esc)
         .run();
 }

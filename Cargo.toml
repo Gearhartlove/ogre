@@ -2,6 +2,7 @@
 name = "ogre"
 version = "0.1.0"
 edition = "2021"
+authors = ["Gearhartlove"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,5 +12,11 @@ opt-level = 3
 [profile.dev]
 opt-level = 1
 
+[profile.release]
+lto = true
+codegen-units = 1
+
 [dependencies]
-bevy = { version = "0.8.1", features = ["dynamic"] }
+bevy = "0.8.1"
+#bevy = { version = "0.8.1", features = ["dynamic"] }
+bevy-inspector-egui = "0.12.1"
