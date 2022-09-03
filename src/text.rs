@@ -24,7 +24,7 @@ impl Plugin for TextPlugin {
 }
 
 impl TextPlugin {
-    const PROMPT: &'static str = "root@ogre location % ";
+    pub const PROMPT: &'static str = "root@ogre location % ";
 }
 
 fn setup(

@@ -1,5 +1,6 @@
 mod text;
 mod compiler;
+mod commands;
 
 use bevy::{prelude::*, reflect::erased_serde::__private::serde::__private::de};
 use bevy::input::keyboard::KeyboardInput;
