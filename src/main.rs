@@ -1,12 +1,18 @@
 mod text;
 mod compiler;
-mod commands;
+mod instruction;
+mod state;
+mod gameflow;
 
 use bevy::{prelude::*, reflect::erased_serde::__private::serde::__private::de};
+use bevy::ecs::query::WorldQuery;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::text::Text2dBounds;
 use crate::compiler::CompilerPlugin;
-use crate::text::TextPlugin;
+use crate::instruction::{Instruction, InstructionEvent};
+use crate::state::{Player, PlayerState, StatePlugin};
+use crate::text::{ExecuteEvent, TextPlugin};
+use bevy::utils::hashbrown::HashMap;
 
 fn main() {
     App::new()
@@ -21,10 +27,12 @@ fn main() {
             }
         )
         .add_plugins(DefaultPlugins)
-        //.add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
+        .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
         .add_plugin(TextPlugin)
         .add_plugin(CompilerPlugin)
+        .add_plugin(StatePlugin)
         .add_startup_system(setup)
+        .add_system(gameflow)
         .add_system(bevy::window::close_on_esc)
         .run();
 }
@@ -51,4 +59,34 @@ fn setup(mut commands: Commands, ass: Res<AssetServer>) {
         transform: Transform::from_xyz(4.0, 10.0, 0.0),
         ..default()
     });
+}
+
+fn gameflow<P: PlayerState + Component>(
+    mut commands: Commands,
+    mut execute_evr: EventReader<InstructionEvent>,
+    mut player_query: Query<(Entity, &P), With<Player>>,
+    mut states: ResMut<HashMap<&'static str, Entity>>,
+)
+{
+    for instruction in execute_evr.iter() {
+        println!("got it");
+        for (mut player_ent, player_state) in player_query.iter_mut() {
+            match instruction.0 {
+                Instruction::move_north => {
+                    player_state.handle_moov("north", &mut player_ent, &mut commands, &mut states);
+                }
+                Instruction::move_south => {
+                    println!("moving south");
+                    player_state.handle_moov("south", &mut player_ent, &mut commands, &mut states);
+                }
+                Instruction::move_west => {
+                    player_state.handle_moov("west", &mut player_ent, &mut commands, &mut states);
+                }
+                Instruction::move_east => {
+                    player_state.handle_moov("east", &mut player_ent, &mut commands, &mut states);
+                }
+                _ => {}
+            }
+        }
+    }
 }
