@@ -36,6 +36,7 @@ fn tokenize(s: &String) -> Vec<Instruction> {
     let mut tokens: Vec<Instruction> = Vec::new();
     let mut split: VecDeque<&str> = s.split(' ').collect();
     remove_prompt(&mut split);
+    dbg!(split.clone());
     let mut split = split.into_iter().peekable();
     loop {
         match split.next() {
@@ -44,7 +45,7 @@ fn tokenize(s: &String) -> Vec<Instruction> {
                 match next {
                     "move" => {
                         if let Some(direction) = split.peek() {
-                            if *direction == "south" { tokens.push(Instruction::move_south) }
+                            if *direction == "south" { split.next(); tokens.push(Instruction::move_south) }
                         }
                         else { tokens.push(Instruction::err) }
                     }
