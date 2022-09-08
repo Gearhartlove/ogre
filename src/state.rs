@@ -1,7 +1,7 @@
 use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-use crate::instruction::{Instruction, Direction};
+use crate::instruction::{InstructionEnum, Direction};
 use crate::InstructionEvent;
 use crate::text::{LineStart, SayEvent};
 
@@ -11,8 +11,6 @@ impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
         app
             // .insert_resource(CurrentState { state: Box::new(StateCellar) })
-            .add_system(state::<StateCellar>)
-            .add_system(state::<StateSewer>)
             .add_startup_system_to_stage(StartupStage::PreStartup, setup_states)
             .add_startup_system_to_stage(StartupStage::Startup, spawn_player);
             // .add_startup_system_to_stage(CoreStage::Last, spawn_player);
@@ -66,19 +64,19 @@ fn state<P: PlayerState + Component>(
     for instruction in execute_evr.iter() {
         for (mut curr_location, player_state) in curr_location_query.iter_mut() {
             match instruction.0 {
-                Instruction::move_north => {
+                InstructionEnum::move_north => {
                     player_state.handle_moov("north", &mut curr_location, &mut commands, &mut states, &mut line_start.location, &mut say_writer);
                 }
-                Instruction::move_south => {
+                InstructionEnum::move_south => {
                     player_state.handle_moov("south", &mut curr_location, &mut commands, &mut states, &mut line_start.location, &mut say_writer);
                 }
-                Instruction::move_west => {
+                InstructionEnum::move_west => {
                     player_state.handle_moov("west", &mut curr_location, &mut commands, &mut states, &mut line_start.location, &mut say_writer);
                 }
-                Instruction::move_east => {
+                InstructionEnum::move_east => {
                     player_state.handle_moov("east", &mut curr_location, &mut commands, &mut states, &mut line_start.location, &mut say_writer);
                 }
-                Instruction::err => { }
+                InstructionEnum::err => { }
                 _ => {}
             }
         }

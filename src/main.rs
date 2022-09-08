@@ -9,7 +9,7 @@ use bevy::ecs::query::WorldQuery;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::text::Text2dBounds;
 use crate::compiler::CompilerPlugin;
-use crate::instruction::{Instruction, InstructionEvent};
+use crate::instruction::{GameflowPlugin, InstructionEnum, InstructionEvent};
 use crate::state::{Player, PlayerState, StatePlugin};
 use crate::text::{ExecuteEvent, TextPlugin};
 use bevy::utils::hashbrown::HashMap;
@@ -30,7 +30,7 @@ fn main() {
         .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
         .add_plugin(TextPlugin)
         .add_plugin(CompilerPlugin)
-        .add_plugin(StatePlugin)
+        .add_plugin(GameflowPlugin)
         .add_startup_system(setup)
         .add_system(bevy::window::close_on_esc)
         .run();

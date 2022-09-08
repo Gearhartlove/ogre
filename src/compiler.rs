@@ -1,8 +1,9 @@
 use std::collections::VecDeque;
 use bevy::prelude::*;
-use crate::instruction::{Instruction, InstructionEvent};
+use crate::instruction::{InstructionComponent, InstructionEnum, InstructionEvent};
 use crate::text::{CurrentLine, ExecuteEvent, MainText};
 use crate::instruction::Direction;
+use crate::Player;
 
 pub struct CompilerPlugin;
 
@@ -15,25 +16,29 @@ impl Plugin for CompilerPlugin {
 }
 
 fn handle_user_input(
+    mut commands: Commands,
     mut exe_evr: EventReader<ExecuteEvent>,
     mut txt_query: Query<&mut Text, With<MainText>>,
+    mut curr_room: Query<Entity, With<Player>>,
     mut curr_line: ResMut<CurrentLine>,
     mut instruction_evw: EventWriter<InstructionEvent>,
 ) {
     for exe in exe_evr.iter() {
         if let Ok(text) = txt_query.get_single_mut() {
-            let tokens = tokenize(&text.sections[curr_line.0].value);
-            for instruction in tokens {
-                dbg!(instruction.clone());
-                instruction_evw.send(InstructionEvent(instruction))
+            if let Ok(room) = curr_room.get_single_mut() {
+                let tokens = tokenize(&text.sections[curr_line.0].value);
+                for instruction in tokens {
+                    dbg!(instruction.clone());
+                    commands.entity(room).insert(InstructionComponent(instruction));
+                }
+                curr_line.0 += 1;
             }
-            curr_line.0 += 1;
         }
     }
 }
 
-fn tokenize(s: &String) -> Vec<Instruction> {
-    let mut tokens: Vec<Instruction> = Vec::new();
+fn tokenize(s: &String) -> Vec<InstructionEnum> {
+    let mut tokens: Vec<InstructionEnum> = Vec::new();
     let mut split: VecDeque<&str> = s.split(' ').collect();
     remove_prompt(&mut split);
     dbg!(split.clone());
@@ -45,11 +50,11 @@ fn tokenize(s: &String) -> Vec<Instruction> {
                 match next {
                     "move" => {
                         if let Some(direction) = split.peek() {
-                            if *direction == "south" { split.next(); tokens.push(Instruction::move_south) }
+                            if *direction == "south" { split.next(); tokens.push(InstructionEnum::move_south) }
                         }
-                        else { tokens.push(Instruction::err) }
+                        else { tokens.push(InstructionEnum::err) }
                     }
-                    _ => { tokens.push(Instruction::err) }
+                    _ => { tokens.push(InstructionEnum::err) }
                 }
 
             }
