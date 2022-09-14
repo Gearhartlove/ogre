@@ -1,6 +1,6 @@
-use bevy::prelude::*;
-use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyboardInput;
+use bevy::input::ButtonState;
+use bevy::prelude::*;
 
 pub struct TextPlugin;
 
@@ -10,11 +10,9 @@ pub struct ExecuteEvent;
 struct ControlDown(bool);
 pub struct CurrentLine(pub(crate) usize);
 
-
 impl Plugin for TextPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<SayEvent>()
+        app.add_event::<SayEvent>()
             .add_event::<ExecuteEvent>()
             .insert_resource(ControlDown(false))
             .insert_resource(CurrentLine(0))
@@ -43,11 +41,7 @@ impl Default for LineStart {
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    ass: Res<AssetServer>,
-    line_start: Res<LineStart>,
-) {
+fn setup(mut commands: Commands, ass: Res<AssetServer>, line_start: Res<LineStart>) {
     // text
     let font = ass.load("fonts/monofontorg.otf");
     let text_style = TextStyle {
@@ -67,12 +61,18 @@ fn setup(
         ..default()
     };
     let text_alignment = TextAlignment::TOP_LEFT;
-    commands.spawn_bundle(TextBundle::from_section(
-        format!("{}@ogre {} {}", line_start.user, line_start.location, line_start.prompt),
-        text_style,
-    )
-        .with_text_alignment(text_alignment)
-        .with_style(style))
+    commands
+        .spawn_bundle(
+            TextBundle::from_section(
+                format!(
+                    "{}@ogre {} {}",
+                    line_start.user, line_start.location, line_start.prompt
+                ),
+                text_style,
+            )
+            .with_text_alignment(text_alignment)
+            .with_style(style),
+        )
         .insert(MainText);
 }
 
@@ -113,8 +113,7 @@ fn type_to_screen(
                         break;
                     }
                 }
-            }
-            else if c == '' {
+            } else if c == '' {
                 // can't delete the prompt
                 let len = text.sections[curr_line.0].value.len();
                 let len = len - 2;
@@ -141,18 +140,17 @@ fn type_to_screen(
     }
 }
 
-fn hold_control(
-    keys: Res<Input<KeyCode>>,
-    mut control: ResMut<ControlDown>,
-) {
+fn hold_control(keys: Res<Input<KeyCode>>, mut control: ResMut<ControlDown>) {
     if keys.just_pressed(KeyCode::LControl)
         || keys.just_pressed(KeyCode::RControl)
-        || keys.just_pressed(KeyCode::LWin) {
+        || keys.just_pressed(KeyCode::LWin)
+    {
         control.0 = true;
     }
     if keys.just_released(KeyCode::LControl)
         || keys.just_released(KeyCode::RControl)
-        || keys.just_released(KeyCode::LWin) {
+        || keys.just_released(KeyCode::LWin)
+    {
         control.0 = false;
     }
 }
@@ -162,7 +160,9 @@ pub struct SayEvent(pub String);
 fn render_text(
     ass: Res<AssetServer>,
     mut text_query: Query<&mut Text, With<MainText>>,
+    mut line_start: Res<LineStart>,
     mut say_reader: EventReader<SayEvent>,
+    mut curr_line: ResMut<CurrentLine>,
 ) {
     for say in say_reader.iter() {
         if let Ok(mut text) = text_query.get_single_mut() {
@@ -174,8 +174,18 @@ fn render_text(
 
             text.sections.push(TextSection {
                 value: say.0.to_string(),
+                style: text_style.clone(),
+            });
+
+            text.sections.push(TextSection {
+                value: format!(
+                    "\n{}@ogre {} {}",
+                    line_start.user, line_start.location, line_start.prompt
+                ),
                 style: text_style,
             });
+
+            curr_line.0 += 2;
         }
     }
 }

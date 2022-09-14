@@ -1,31 +1,29 @@
-mod text;
 mod compiler;
-mod instruction;
-mod state;
 mod gameflow;
+mod instruction;
+mod room;
+mod state;
+mod text;
 
-use bevy::{prelude::*, reflect::erased_serde::__private::serde::__private::de};
+use crate::compiler::CompilerPlugin;
+use crate::gameflow::GameflowPlugin;
+use crate::text::{ExecuteEvent, TextPlugin};
 use bevy::ecs::query::WorldQuery;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::text::Text2dBounds;
-use crate::compiler::CompilerPlugin;
-use crate::instruction::{GameflowPlugin, InstructionEnum, InstructionEvent};
-use crate::state::{Player, PlayerState, StatePlugin};
-use crate::text::{ExecuteEvent, TextPlugin};
 use bevy::utils::hashbrown::HashMap;
+use bevy::{prelude::*, reflect::erased_serde::__private::serde::__private::de};
 
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(
-            WindowDescriptor {
-                title: "OGRE".to_string(),
-                width: 640.,
-                height: 480.,
-                position: WindowPosition::At(Vec2::new(5., 30.)),
-                ..default()
-            }
-        )
+        .insert_resource(WindowDescriptor {
+            title: "OGRE".to_string(),
+            width: 640.,
+            height: 480.,
+            position: WindowPosition::At(Vec2::new(5., 30.)),
+            ..default()
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_inspector_egui::WorldInspectorPlugin::new())
         .add_plugin(TextPlugin)

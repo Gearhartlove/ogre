@@ -1,16 +1,15 @@
-use std::collections::VecDeque;
-use bevy::prelude::*;
+use crate::instruction::Direction;
 use crate::instruction::{InstructionComponent, InstructionEnum, InstructionEvent};
 use crate::text::{CurrentLine, ExecuteEvent, MainText};
-use crate::instruction::Direction;
-use crate::Player;
+use crate::room::Player;
+use bevy::prelude::*;
+use std::collections::VecDeque;
 
 pub struct CompilerPlugin;
 
 impl Plugin for CompilerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<InstructionEvent>()
+        app.add_event::<InstructionEvent>()
             .add_system_to_stage(CoreStage::PostUpdate, handle_user_input);
     }
 }
@@ -20,8 +19,8 @@ fn handle_user_input(
     mut exe_evr: EventReader<ExecuteEvent>,
     mut txt_query: Query<&mut Text, With<MainText>>,
     mut curr_room: Query<Entity, With<Player>>,
-    mut curr_line: ResMut<CurrentLine>,
     mut instruction_evw: EventWriter<InstructionEvent>,
+    mut curr_line: Res<CurrentLine>,
 ) {
     for exe in exe_evr.iter() {
         if let Ok(text) = txt_query.get_single_mut() {
@@ -29,9 +28,10 @@ fn handle_user_input(
                 let tokens = tokenize(&text.sections[curr_line.0].value);
                 for instruction in tokens {
                     dbg!(instruction.clone());
-                    commands.entity(room).insert(InstructionComponent(instruction));
+                    commands
+                        .entity(room)
+                        .insert(InstructionComponent(instruction));
                 }
-                curr_line.0 += 1;
             }
         }
     }
@@ -45,19 +45,37 @@ fn tokenize(s: &String) -> Vec<InstructionEnum> {
     let mut split = split.into_iter().peekable();
     loop {
         match split.next() {
-            None => { break }
-            Some(next) => {
-                match next {
-                    "move" => {
-                        if let Some(direction) = split.peek() {
-                            if *direction == "south" { split.next(); tokens.push(InstructionEnum::move_south) }
+            None => break,
+            Some(next) => match next {
+                "move" => {
+                    if let Some(direction) = split.peek() {
+                        if *direction == "south" {
+                            split.next();
+                            tokens.push(InstructionEnum::moov_south)
                         }
-                        else { tokens.push(InstructionEnum::err) }
-                    }
-                    _ => { tokens.push(InstructionEnum::err) }
-                }
 
-            }
+                        if let Some(direction) = split.peek() {
+                            if *direction == "north" {
+                                split.next();
+                                tokens.push(InstructionEnum::moov_north)
+                            }
+                        }
+                        if let Some(direction) = split.peek() {
+                            if *direction == "east" {
+                                split.next();
+                                tokens.push(InstructionEnum::moov_east)
+                            }
+                        }
+                        if let Some(direction) = split.peek() {
+                            if *direction == "west" {
+                                split.next();
+                                tokens.push(InstructionEnum::moov_west)
+                            }
+                        }
+                    }
+                }
+                _ => tokens.push(InstructionEnum::err),
+            },
         }
     }
     tokens
