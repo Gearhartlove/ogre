@@ -32,9 +32,9 @@ fn update_game(
     mut say_evw: EventWriter<SayEvent>,
     mut rooms: ResMut<Rooms>,
     mut line_start: ResMut<LineStart>,
-    mut instruction_query: Query<(&InstructionComponent, Entity, &MoovSouth, &MoovNorth, &MoovEast, &MoovWest), With<Player>>,
+    mut instruction_query: Query<(&InstructionComponent, Entity, &MoovSouth, &MoovNorth, &MoovEast, &MoovWest, &Look), With<Player>>,
 ) {
-    if let Ok((instruction, curr_room, moov_south, moov_north, moov_east, moov_west)) = instruction_query.get_single_mut() {
+    if let Ok((instruction, curr_room, moov_south, moov_north, moov_east, moov_west, look)) = instruction_query.get_single_mut() {
         match instruction.0 {
             InstructionEnum::moov_south => {
                 moov_south.moov(
@@ -72,6 +72,9 @@ fn update_game(
                     &mut line_start,
                 );
             },
+            InstructionEnum::look => {
+                look.description(&mut say_evw);
+            }
             _ => { panic!("Instruction not added to update_game in gameflow.rs")}
         }
         // remove instruction component from the room

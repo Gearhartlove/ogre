@@ -81,14 +81,12 @@ pub struct Look {
 }
 
 impl Look {
-    pub fn look(
+    pub fn description (
         &self,
-        mut commands: &mut Commands,
-        curr_room: &Entity,
-        mut say_evw: &mut EventWriter<SayEvent>,
+        say_evw: &mut EventWriter<SayEvent>,
     ) {
         // WRITE TO SCREEN
-        say_evw.send(SayEvent(format!("\n{}", self.text.to_string())));
+        say_evw.send(SayEvent(format!("\n{}", self.text)));
     }
 }
 

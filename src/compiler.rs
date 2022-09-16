@@ -47,6 +47,16 @@ fn tokenize(s: &String) -> Vec<InstructionEnum> {
         match split.next() {
             None => break,
             Some(next) => match next {
+                // TODO: define possible additional charater info
+                "clear" => tokens.push(InstructionEnum::clear),
+                "sleep" => tokens.push(InstructionEnum::sleep),
+                "loot" => tokens.push(InstructionEnum::loot),
+                "settings" => tokens.push(InstructionEnum::settings),
+                "character" => tokens.push(InstructionEnum::character),
+                "inventory" => tokens.push(InstructionEnum::inventory),
+                "remember" => tokens.push(InstructionEnum::remember),
+                "talk" => tokens.push(InstructionEnum::talk),
+                "look" => tokens.push(InstructionEnum::look),
                 "move" => {
                     if let Some(direction) = split.peek() {
                         if *direction == "south" {
